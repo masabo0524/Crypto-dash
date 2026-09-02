@@ -1,0 +1,73 @@
+import { useState, useEffect } from 'react';
+import { Routes, Route } from 'react-router';
+import HomePage from './pages/home.jsx'
+import About from './pages/about.jsx'
+import Header from './components/Header.jsx'
+import NotFoundPage from './pages/not-found.jsx'
+import CoinDetailPage from './pages/coin-details.jsx'
+
+
+const API_URL = `${import.meta.env.VITE_API_URL}&page=1&sparkline=false`;
+const API_KEY = import.meta.env.VITE_API_KEY;
+
+const App = () => {
+    const [coins, setCoins] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [limit, setLimit] = useState(10);
+    const [filter, setFilter] = useState('');
+    const [sortBy, setSortBy] = useState('market_cap_desc');
+
+    useEffect(() => {
+	fetch(`${API_URL}&per_page=${limit}`,
+	      {
+		  headers:{
+		      "x-cg-demo-api-key": API_KEY
+		  }
+	      })
+	    .then((res) => {
+		if(!res.ok) throw new Error('Failed to fetch data');
+		return res.json();
+	    })
+	    .then((data) => {
+		setCoins(data);
+		setLoading(false);
+	    })
+	    .catch((err) => {
+		setError(err.message);
+		setLoading(false);
+		console.log(err);
+	    })
+    },[limit]);
+
+
+    
+    return (
+	<>
+	    <Header />
+	    <Routes>
+		<Route path='/'
+		       element={
+			   <HomePage
+			       coins={coins}
+			       filter={filter}
+			       setFilter={setFilter}
+			       sortBy={sortBy}
+			       setSortBy={setSortBy}
+			       limit={limit}
+			       setLimit={setLimit}
+			       loading={loading}
+			       setLoading={setLoading}
+			       error={error}
+			   />
+		       }
+		/>
+		<Route path='/about' element={<About/>}/>
+		<Route path='/coin/:id' element={<CoinDetailPage/>}/>
+		<Route path='*' element={<NotFoundPage/>}></Route>
+	    </Routes>
+	</>
+    );
+}
+
+export default App;
